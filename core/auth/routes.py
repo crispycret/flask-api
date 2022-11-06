@@ -1,5 +1,6 @@
 import jwt
 import datetime
+from functools import wraps
 
 from flask import request
 
@@ -8,35 +9,7 @@ from core.auth import auth
 from config import Configuration
 
 from .models import User, Token
-
-from functools import wraps
-
-def require_token(f):
-    ''' 
-    Decorator to restrict access allowing only valid authentication tokens and other constraints.
-    token and other constraints should be provided in the request headers. 
-    '''
-    @wraps(f)
-    def func(*args, **kwargs):
-        if ('Authorization' not in request.headers): 
-            return {'status': 404, 'msg': "Authentication token not provided.", 'body':{}}
-
-        encoded_token = request.headers.get('Authorization')
-        
-        try: data = jwt.decode(encoded_token, Configuration.ADMIN_SECRET_KEY, 'HS256')
-        except: return {'status': 401, 'msg': 'invalid authentication token', 'body': {}}
-
-        token = Token.query.filter_by(encoded_token=encoded_token).first()
-        if (not token): return {'status': 404, 'msg': 'token was not found', 'body': {}}
-
-        if ('user.public_id' not in data):
-            return {'status': 404, 'msg': 'user was not found', 'body': {}}
-        
-        user = User.query.filter_by().first()
-        if (not user): return {'status': 404, 'msg': 'user was not found', 'body': {}}
-
-        return f(*args, user=user, **kwargs)
-    return func
+from .decorators import require_token, require_admin
 
 
 
@@ -138,6 +111,29 @@ def login():
     return {'status': 200, 'msg': 'logged in', 'body': response}
 
 
+@auth.route('/logout', methods=['POST'])
+@require_token
+def logout(user, token):
+    ''' Confirm the removal of the provided authorization token. '''
+    try:
+        db.session.delete(token)
+        return {'status': 200, 'msg': 'logged out', 'body': {}}
+    except: return {'status': 409, 'msg': 'could not properly logout', 'body': {}}
+    
+
+
+@auth.route('/admin/demote', 'PATCH')
+@require_admin
+def demote_admin(user, token):
+    ''' Demote the requester from admin privileges if the request is an admin'''
+    try:
+        user.privilege = 0
+        db.session.commit()
+        return {'status': 200, 'msg': 'demotion successful', 'body': {}}
+    except: return {'status': 409, 'msg': 'could not demote privileges', 'body': {}}
+
+
+
 
 @auth.route('/user/<username>/follow', methods=['POST'])
 @require_token
@@ -166,5 +162,8 @@ def block_user(username, user):
     return {'status': 200, 'msg': f'{username} blocked', 'body': {}}
     
         
+
+
+
 
 
