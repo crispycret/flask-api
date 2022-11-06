@@ -14,11 +14,14 @@ from .decorators import require_token, require_admin
 
 
 
+
+
 @auth.route('/user/create', methods=['POST'])
 def create_user():
     ''' '''
     data = request.get_json()
 
+    if ('username' not in data or 'email' not in data): return {'status': 409, 'msg': 'both username and email required', 'body': {}}
     if ('email' not in data): return {'status': 409, 'msg': 'email field required', 'body': {}}
     if ('password' not in data): return {'status': 409, 'msg': 'password field required', 'body': {}}
 
@@ -57,6 +60,12 @@ def create_admin():
 
 
 
+@auth.route('/user/<username>', methods=['GET'])
+def get_user(username):
+    ''' get a user by username '''
+    u = User.query.filter_by(username=username).first()
+    if (not u): return {'status': 404, 'msg': 'user not found', 'body': {}}
+    return {'status': 200, 'msg': 'user found', 'body': u.serialize}
 
 @auth.route('/user/id/<id>', methods=['GET'])
 def get_user_by_id(id):
@@ -83,10 +92,13 @@ def login():
 
     if ('password' not in data): 
         return {'status': 409, 'msg': 'password required', 'body': {}}
-    if ('email' not in data): 
-        return {'status': 409, 'msg': 'email required', 'body': {}}
+    if ('email' not in data and 'username' not in data): 
+        return {'status': 409, 'msg': 'email or username required', 'body': {}}
+
     
-    user = User.query.filter_by(email=data['email']).first()
+    payload =  {k:v for k,v in data.items() if k in ['email', 'password']}
+    user = User.query.filter_by(**payload).first()
+
     if (not user): return {'status': 404, 'msg': 'user not found', 'body': {}}
     
     
@@ -97,7 +109,6 @@ def login():
     token = jwt.encode(data, Configuration.ADMIN_SECRET_KEY, 'HS256')
     response = {'Authorization': token}
     return {'status': 200, 'msg': 'logged in', 'body': response}
-
 
 
 @auth.route('/logout', methods=['POST'])
@@ -120,6 +131,39 @@ def demote_admin(user, token):
         db.session.commit()
         return {'status': 200, 'msg': 'demotion successful', 'body': {}}
     except: return {'status': 409, 'msg': 'could not demote privileges', 'body': {}}
+
+
+
+
+@auth.route('/user/<username>/follow', methods=['POST'])
+@require_token
+def follow_user(username, user):
+    ''' create a realtionship between the authenticated user and the specified user '''
+    
+    target_user = User.query.filter_by(username=username).first()
+    if (not target_user): {'status': 404, 'msg': 'target user not found', 'body': {}}
+
+    try:
+        target_user.followers.append(user)
+        db.session.commit()
+    except: return {'status': 409, 'msg': 'could not follow user', 'body': {}}
+    return {'status': 200, 'msg': f'following {username}', 'body': {}}
+    
+
+@auth.route('/user/<username>/block', methods=['POST'])
+@require_token
+def block_user(username, user):
+    target_user = User.query.filter_by(username=username).first()
+    if (not target_user): {'status': 404, 'msg': 'target user not found', 'body': {}}
+    try:
+        user.blocked.append(target_user)
+        db.session.commit()
+    except: return {'status': 409, 'msg': 'could not block user', 'body': {}}
+    return {'status': 200, 'msg': f'{username} blocked', 'body': {}}
+    
+        
+
+
 
 
 
