@@ -4,17 +4,7 @@ from sqlalchemy import Table, Column, ForeignKey
 
 from .. import db
 
-def uuid32(): return uuid.uuid4().hex
-def uuid64(): return uuid.uuid4().hex + uuid.uuid4().hex
-
-
-def unique_generator(cls, field, value):
-    ''' Generate a value that is unique to to the `field` attribute of the table `cls` '''
-    params = {field: value}
-    o = cls.query.filter_by(**params).first()
-    if (o): return unique_generator(cls, field, value)
-    return value
-
+from .utils import uuid32, uuid64, unique_generator
 
 class Token(db.Model):
     ''' User generated token holding some data that is used to validate the user. '''
@@ -34,31 +24,11 @@ class Token(db.Model):
 
 
 
-# https://blog.miguelgrinberg.com/post/the-flask-mega-tutorial-part-viii-followers-contacts-and-friends
-# Many-to-Many Relationship is the relation of a user having many followers and a user following many users.
-# This requires the use of an association table.
-# Because the second entity in the relationship is also of users this type of relationship is called a 
-# self-referential relationship. 
-# The use of an auxiliary table has no data other than the foreign keys.
-
-followers = db.Table('followers',
-    db.Column('follower_id', db.Integer, db.ForeignKey('user.id')),
-    db.Column('followed_id', db.Integer, db.ForeignKey('user.id'))
-)
-
-blockers = db.Table('blockers',
-    db.Column('blocker_id', db.Integer, db.ForeignKey('user.id')),
-    db.Column('blocked_id', db.Integer, db.ForeignKey('user.id'))
-)
-
-
-
 class User(db.Model):
     ''' A user object containing an array of fields and relationships '''
     __tablename__ = 'user'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    username = db.Column(db.String(64), nullable=False, unique=True)
     email = db.Column(db.String(64), nullable=False, unique=True)
     password_hash = db.Column(db.String(256), nullable=False)
     public_id = db.Column(db.String(32), nullable=False, unique=True)
@@ -68,37 +38,21 @@ class User(db.Model):
     # Relationships
     tokens = db.relationship('Token', backref='user', lazy=True, cascade='all, delete-orphan')
 
-    # relation of users who have blocked this user
-    blocked = db.relationship(
-        "User", secondary=blockers,
-        primaryjoin=(blockers.c.blocker_id == id), 
-        secondaryjoin=(blockers.c.blocked_id == id), 
-        backref=db.backref('blockers', lazy='dynamic'), lazy='dynamic'
-    )
-
-    # relation of users who have followed this user
-    followed = db.relationship(
-        'User', secondary=followers,
-        primaryjoin=(followers.c.follower_id == id),
-        secondaryjoin=(followers.c.followed_id == id),
-        backref=db.backref('followers', lazy='dynamic'), lazy='dynamic'
-    )
-
 
     @property
     def serialize(self):
         return {
-            'id': self.id, 'username': self.username, 'email': self.email, 
+            'id': self.id, 'email': self.email, 
             'public_id': self.public_id, 'privilege': self.privilege
         }
 
     @staticmethod
-    def create(username, email, password, privilege=0):
+    def create(email, password, privilege=0):
         ''' '''
         password_hash = password
         public_id = User.generate_public_id()
         private_id = User.generate_private_id()
-        u = User( username=username, privilege=privilege,
+        u = User(privilege=privilege,
             email=email, password_hash=password_hash,
             public_id=public_id, private_id=private_id, 
         )

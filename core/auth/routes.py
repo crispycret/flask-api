@@ -1,5 +1,6 @@
 import jwt
 import datetime
+from functools import wraps
 
 from flask import request
 
@@ -8,37 +9,7 @@ from core.auth import auth
 from config import Configuration
 
 from .models import User, Token
-
-from functools import wraps
-
-def require_token(f):
-    ''' 
-    Decorator to restrict access allowing only valid authentication tokens and other constraints.
-    token and other constraints should be provided in the request headers. 
-    '''
-    @wraps(f)
-    def func(*args, **kwargs):
-        if ('Authorization' not in request.headers): 
-            return {'status': 404, 'msg': "Authentication token not provided.", 'body':{}}
-
-        encoded_token = request.headers.get('Authorization')
-        
-        try: data = jwt.decode(encoded_token, Configuration.ADMIN_SECRET_KEY, 'HS256')
-        except: return {'status': 401, 'msg': 'invalid authentication token', 'body': {}}
-
-        token = Token.query.filter_by(encoded_token=encoded_token).first()
-        if (not token): return {'status': 404, 'msg': 'token was not found', 'body': {}}
-
-        if ('user.public_id' not in data):
-            return {'status': 404, 'msg': 'user was not found', 'body': {}}
-        
-        user = User.query.filter_by().first()
-        if (not user): return {'status': 404, 'msg': 'user was not found', 'body': {}}
-
-        return f(*args, user=user, **kwargs)
-    return func
-
-
+from .decorators import require_token, require_admin
 
 
 
@@ -48,7 +19,6 @@ def create_user():
     ''' '''
     data = request.get_json()
 
-    if ('username' not in data or 'email' not in data): return {'status': 409, 'msg': 'both username and email required', 'body': {}}
     if ('email' not in data): return {'status': 409, 'msg': 'email field required', 'body': {}}
     if ('password' not in data): return {'status': 409, 'msg': 'password field required', 'body': {}}
 
@@ -87,12 +57,6 @@ def create_admin():
 
 
 
-@auth.route('/user/<username>', methods=['GET'])
-def get_user(username):
-    ''' get a user by username '''
-    u = User.query.filter_by(username=username).first()
-    if (not u): return {'status': 404, 'msg': 'user not found', 'body': {}}
-    return {'status': 200, 'msg': 'user found', 'body': u.serialize}
 
 @auth.route('/user/id/<id>', methods=['GET'])
 def get_user_by_id(id):
@@ -119,13 +83,10 @@ def login():
 
     if ('password' not in data): 
         return {'status': 409, 'msg': 'password required', 'body': {}}
-    if ('email' not in data and 'username' not in data): 
-        return {'status': 409, 'msg': 'email or username required', 'body': {}}
-
+    if ('email' not in data): 
+        return {'status': 409, 'msg': 'email required', 'body': {}}
     
-    payload =  {k:v for k,v in data.items() if k in ['email', 'password']}
-    user = User.query.filter_by(**payload).first()
-
+    user = User.query.filter_by(email=data['email']).first()
     if (not user): return {'status': 404, 'msg': 'user not found', 'body': {}}
     
     
@@ -139,32 +100,26 @@ def login():
 
 
 
-@auth.route('/user/<username>/follow', methods=['POST'])
+@auth.route('/logout', methods=['POST'])
 @require_token
-def follow_user(username, user):
-    ''' create a realtionship between the authenticated user and the specified user '''
-    
-    target_user = User.query.filter_by(username=username).first()
-    if (not target_user): {'status': 404, 'msg': 'target user not found', 'body': {}}
-
+def logout(user, token):
+    ''' Confirm the removal of the provided authorization token. '''
     try:
-        target_user.followers.append(user)
-        db.session.commit()
-    except: return {'status': 409, 'msg': 'could not follow user', 'body': {}}
-    return {'status': 200, 'msg': f'following {username}', 'body': {}}
+        db.session.delete(token)
+        return {'status': 200, 'msg': 'logged out', 'body': {}}
+    except: return {'status': 409, 'msg': 'could not properly logout', 'body': {}}
     
 
-@auth.route('/user/<username>/block', methods=['POST'])
-@require_token
-def block_user(username, user):
-    target_user = User.query.filter_by(username=username).first()
-    if (not target_user): {'status': 404, 'msg': 'target user not found', 'body': {}}
+
+@auth.route('/admin/demote', 'PATCH')
+@require_admin
+def demote_admin(user, token):
+    ''' Demote the requester from admin privileges if the request is an admin'''
     try:
-        user.blocked.append(target_user)
+        user.privilege = 0
         db.session.commit()
-    except: return {'status': 409, 'msg': 'could not block user', 'body': {}}
-    return {'status': 200, 'msg': f'{username} blocked', 'body': {}}
-    
-        
+        return {'status': 200, 'msg': 'demotion successful', 'body': {}}
+    except: return {'status': 409, 'msg': 'could not demote privileges', 'body': {}}
+
 
 
