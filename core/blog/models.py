@@ -14,45 +14,52 @@ class Post(db.Model):
     created_at = db.Column(db.DateTime(), nullable=False)
     updated_at = db.Column(db.DateTime(), nullable=True)
 
+    private = db.Column(db.Boolean, nullable=False, default=False)
+    draft = db.Column(db.Boolean, nullable=False, default=False)
+
     comments = db.relationship('Comment', backref='post', lazy=True, cascade='all, delete-orphan')
 
     @property
     def serialize(self):
         return {
-            'id': self.id, 
+            'id': self.id,
+            'user_id': self.user_id, 
             'title': self.title,
             'body': self.body.decode("utf-8"),
+            'private': self.private,
+            'draft': self.draft,
             'created_at': self.created_at,
             'updated_at': self.updated_at
         }
 
     @staticmethod
-    def create(data={}):
+    def create(user_id, title, body, created_at=None, updated_at=None, private=False, draft=False):
         ''' Return a post using the given data or return None if a post could not be created. '''
         # Hard code the fields for now (make abstract to always implement these methods)
 
-        if ('created_at' not in data):
-            data['created_at'] = datetime.datetime.now()
+        if (not created_at):
+            created_at = datetime.datetime.now()
         
-        data['body'] = bytes(data['body'], 'UTF-8')
+        body = bytes(body, 'UTF-8')
 
-        try: return Post(**data)
+        try: return Post(
+            user_id=user_id, title=title, body=body, 
+            created_at=created_at, updated_at=updated_at,
+            private=private, draft=draft
+        )
         except: return None
 
 
     def update(self, data={}):
         ''' Allow the modification of the object. '''
 
-        if ('updated_at' not in data.keys()):
-            self.updated_at = datetime.datetime.now()
-        else:
-            self.updated_at = data['updated_at']
+        if ('updated_at' not in data.keys()): self.updated_at = datetime.datetime.now()
+        else: self.updated_at = data['updated_at']
 
-        if ('body' in data.keys()):
-            self.body = bytes(data['body'], 'UTF-8')
-
-        if('title' in data.keys()):
-            self.title = data['title']
+        if('title' in data.keys()): self.title = data['title']
+        if ('body' in data.keys()): self.body = bytes(data['body'], 'UTF-8')
+        if('private' in data.keys()): self.private = data['private']
+        if('draft' in data.keys()): self.draft = data['draft']
 
         return self
 
@@ -77,17 +84,18 @@ class Comment(db.Model):
         return {
             'id': self.id,
             'post_id': self.post_id,
+            'user_id': self.user_id,
             'body': self.body,
             'created_at': self.created_at,
             'updated_at': self.updated_at
         }
 
     @staticmethod
-    def create(data):
-        if ('created_at' not in data): 
-            data['created_at'] = datetime.datetime.now()
+    def create(user_id, post_id, body, created_at=None, updated_at=None):
+        if (not created_at): 
+            created_at = datetime.datetime.now()
         
-        try: return Comment(**data)
+        try: return Comment(user_id=user_id, post_id=post_id, body=body, created_at=created_at, updated_at=updated_at)
         except: return None
 
 
@@ -97,7 +105,7 @@ class Comment(db.Model):
 
         self.updated_at = data['updated_at']
 
-        if ('post_id' in data): self.post_id = data['post_id']
+        # if ('post_id' in data): self.post_id = data['post_id']
         if ('body' in data): self.body = data['body']
 
         return self

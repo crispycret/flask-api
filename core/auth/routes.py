@@ -3,6 +3,7 @@ import datetime
 from functools import wraps
 
 from flask import request
+from werkzeug.security import check_password_hash
 
 from core import db
 from core.auth import auth
@@ -25,7 +26,7 @@ def create_user():
     if ('email' not in data): return {'status': 409, 'msg': 'email field required', 'body': {}}
     if ('password' not in data): return {'status': 409, 'msg': 'password field required', 'body': {}}
 
-    try: u = User.new(data['email'], data['password'])
+    try: u = User.create(data['username'], data['email'], data['password'])
     except: return {'status': 409, 'msg': 'could not create user', 'body': {}}
     
     try: 
@@ -49,7 +50,7 @@ def create_admin():
     if ('email' not in data): return {'status': 409, 'msg': 'email field required', 'body': {}}
     if ('password' not in data): return {'status': 409, 'msg': 'password field required', 'body': {}}
 
-    try: u = User.new(data['email'], data['password'], privilege=data['privilege'] or 1)
+    try: u = User.create(data['email'], data['password'], privilege=data['privilege'] or 1)
     except: return {'status': 409, 'msg': 'could not create user', 'body': {}}
 
     try:
@@ -85,7 +86,7 @@ def get_user_by_email(email):
 
 
 
-@auth.route('/login')
+@auth.route('/login', methods=['POST'])
 def login():
     ''' Return an authorization token upon validation of the email and password '''
     data = request.get_json()
@@ -96,18 +97,24 @@ def login():
         return {'status': 409, 'msg': 'email or username required', 'body': {}}
 
     
-    payload =  {k:v for k,v in data.items() if k in ['email', 'password']}
+    payload =  {k:v for k,v in data.items() if k in ['email', 'username']}
     user = User.query.filter_by(**payload).first()
 
     if (not user): return {'status': 404, 'msg': 'user not found', 'body': {}}
-    
+    if (not check_password_hash(user.password_hash, data['password'])):
+        return {'status': 401, 'msg': 'password incorrect', 'body': {}}
+
     
     created = datetime.datetime.now()
     expires = created + datetime.timedelta(hours=4)
-    data = {'public_id': user.public_id, 'created': created, 'expires': expires }
+    data = {'public_id': user.public_id, 'created': created.isoformat(), 'expires': expires.isoformat()}
     
-    token = jwt.encode(data, Configuration.ADMIN_SECRET_KEY, 'HS256')
-    response = {'Authorization': token}
+    encoded_token = jwt.encode(data, Configuration.SECRET_KEY, 'HS256')
+    token = Token(user_id=user.id, encoded_token=encoded_token)
+    db.session.add(token)
+    db.session.commit()
+
+    response = {'Authorization': encoded_token}
     return {'status': 200, 'msg': 'logged in', 'body': response}
 
 
@@ -122,7 +129,7 @@ def logout(user, token):
     
 
 
-@auth.route('/admin/demote', 'PATCH')
+@auth.route('/admin/demote', methods=['PATCH'])
 @require_admin
 def demote_admin(user, token):
     ''' Demote the requester from admin privileges if the request is an admin'''

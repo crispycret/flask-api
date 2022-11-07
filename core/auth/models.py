@@ -2,6 +2,8 @@
 import uuid
 from sqlalchemy import Table, Column, ForeignKey
 
+from werkzeug.security import generate_password_hash, check_password_hash
+
 from .. import db
 
 from .utils import uuid32, uuid64, unique_generator
@@ -75,6 +77,9 @@ class User(db.Model):
         backref=db.backref('followers', lazy='dynamic'), lazy='dynamic'
     )
 
+    posts = db.relationship('Post', backref='user', lazy=True, cascade='all, delete-orphan')
+    comments = db.relationship('Comment', backref='user', lazy=True, cascade='all, delete-orphan')
+
 
     @property
     def serialize(self):
@@ -86,7 +91,7 @@ class User(db.Model):
     @staticmethod
     def create(username, email, password, privilege=0):
         ''' '''
-        password_hash = password
+        password_hash = generate_password_hash(password)
         public_id = User.generate_public_id()
         private_id = User.generate_private_id()
         u = User( username=username, privilege=privilege,
