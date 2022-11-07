@@ -38,12 +38,13 @@ def require_admin(f):
     ''' restrict access to admin users '''
     @wraps(f)
     def func(*args, **kwargs):
+        # SAME AS require_token
         if ('Authorization' not in request.headers): 
             return {'status': 404, 'msg': "Authentication token not provided.", 'body':{}}
 
         encoded_token = request.headers.get('Authorization')
         
-        try: data = jwt.decode(encoded_token, Configuration.ADMIN_SECRET_KEY, 'HS256')
+        try: data = jwt.decode(encoded_token, Configuration.SECRET_KEY, 'HS256')
         except: return {'status': 401, 'msg': 'invalid authentication token', 'body': {}}
 
         token = Token.query.filter_by(encoded_token=encoded_token).first()
@@ -55,6 +56,7 @@ def require_admin(f):
         user = User.query.filter_by().first()
         if (not user): return {'status': 404, 'msg': 'user was not found', 'body': {}}
 
+        # Extension of require_token
         if (user.privilege == 0):
             return {'status': 401, 'msg': 'user does not have the privilege', 'body': {}}
 
