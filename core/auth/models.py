@@ -47,11 +47,14 @@ blockers = db.Table('blockers',
 
 
 class User(db.Model):
+    
+    USERNAME_LENGTH = 64
+
     ''' A user object containing an array of fields and relationships '''
     __tablename__ = 'user'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    username = db.Column(db.String(64), nullable=False, unique=True)
+    username = db.Column(db.String(USERNAME_LENGTH), nullable=False, unique=True)
     email = db.Column(db.String(64), nullable=False, unique=True)
     password_hash = db.Column(db.String(256), nullable=False)
     public_id = db.Column(db.String(32), nullable=False, unique=True)

@@ -47,10 +47,18 @@ def create_admin():
     try: data = jwt.decode(encoded_token, Configuration.ADMIN_SECRET_KEY, 'HS256')
     except: return {'status': 401, 'msg': 'invalid authentication token', 'body': {}}
 
+    if ('username' not in data): return {'status': 409, 'msg': 'username field required', 'body': {}}
     if ('email' not in data): return {'status': 409, 'msg': 'email field required', 'body': {}}
     if ('password' not in data): return {'status': 409, 'msg': 'password field required', 'body': {}}
 
-    try: u = User.create(data['email'], data['password'], privilege=data['privilege'] or 1)
+    # validate username as alphanumerical w/ underscores only with a max_length
+    import string
+    allowed_chars = [c for c in (string.ascii_letters + string.digits)]
+    allowed_chars.append('_')
+
+
+
+    try: u = User.create(data['username'], data['email'], data['password'], privilege=data['privilege'] or 1)
     except: return {'status': 409, 'msg': 'could not create user', 'body': {}}
 
     try:
