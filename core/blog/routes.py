@@ -224,16 +224,16 @@ def get_last_n_posts(n):
 @blog.route('/posts', methods=['GET'])
 def get_posts():
     ''' Get all posts. Use pagenativation was database gets large. '''
-    data = request.get_json()
+    try: data = request.get_json()
+    except:data = {}
+        
     posts = []
 
     # Get all posts
-    if ('ids' not in data):
-        posts = Post.query.all()
-    
+    if ('ids' not in data): posts = Post.query.all()
+
     # Get all posts
-    elif (data['ids'] == []):
-        posts = Post.query.all()
+    elif (data['ids'] == []): posts = Post.query.all()
 
     # Provided ids attribute is not a list
     elif (type(data['ids']) is not list):
@@ -292,6 +292,7 @@ def get_posts_by_user (user_id):
 def get_posts_by_users():
     data = request.get_json()
     
+
     # Get all posts
     if ('ids' not in data):
         return {'status': 409, 'msg': 'require a list of user ids', 'body': {}} 
