@@ -14,7 +14,7 @@ from .models import User, Token
 from .decorators import require_token, require_admin
 
 
-def validate_and_create_user(data):
+def validate_and_create_user(data, privilege=0):
     ''' '''
     # Verify required infromation was provided
     if ('username' not in data): return {'status': 409, 'msg': 'username field required', 'body': {}}
@@ -44,10 +44,9 @@ def validate_and_create_user(data):
     user = User.query.filter_by(email=data['username']).first()
     if (user): return {'status': 401, 'msg': f'username already in use.', 'body': {}}
 
-
     # Validate username and email do not exist
-    try: u = User.create(data['username'], data['email'], data['password'], privilege=data['privilege'] or 0)
-    except: return {'status': 409, 'msg': 'could not create user', 'body': {}}
+    try: u = User.create(data['username'], data['email'], data['password'], privilege=privilege)
+    except Exception as e: return {'status': 409, 'msg': 'could not create user', 'body': str(e)}
 
     # Add new user to the database and return the requests response.
     try:
@@ -66,7 +65,8 @@ def create_user():
     Create a new user granted that all required information was provided and the email and username is unique. 
     Return the status of the request 
     '''
-    return validate_and_create_user(request.get_json())
+    data = request.get_json()
+    return validate_and_create_user(data)
 
 
 
@@ -85,7 +85,7 @@ def create_admin():
     try: data = jwt.decode(encoded_token, Configuration.ADMIN_SECRET_KEY, 'HS256')
     except: return {'status': 401, 'msg': 'invalid authentication token', 'body': {}}
 
-    return validate_and_create_user(data)
+    return validate_and_create_user(data, 1)
  
 
 
