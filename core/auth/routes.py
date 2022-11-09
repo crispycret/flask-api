@@ -1,8 +1,10 @@
 import jwt
+import string
 import datetime
 from functools import wraps
 
 from flask import request
+from werkzeug.security import check_password_hash
 
 from core import db
 from core.auth import auth
@@ -12,52 +14,79 @@ from .models import User, Token
 from .decorators import require_token, require_admin
 
 
-
-
-
-
-@auth.route('/user/create', methods=['POST'])
-def create_user():
+def validate_and_create_user(data, privilege=0):
     ''' '''
-    data = request.get_json()
-
-    if ('username' not in data or 'email' not in data): return {'status': 409, 'msg': 'both username and email required', 'body': {}}
+    # Verify required infromation was provided
+    if ('username' not in data): return {'status': 409, 'msg': 'username field required', 'body': {}}
     if ('email' not in data): return {'status': 409, 'msg': 'email field required', 'body': {}}
     if ('password' not in data): return {'status': 409, 'msg': 'password field required', 'body': {}}
 
-    try: u = User.new(data['email'], data['password'])
-    except: return {'status': 409, 'msg': 'could not create user', 'body': {}}
-    
-    try: 
+    # Verify provided information is valid (meets constraints)
+
+    ## validate username uses alphanumerical w/ underscores and periods and is not greater than the max length
+    allowed_chars = [c for c in (string.ascii_letters + string.digits + '_.')]
+    for c in data['username']:
+        if (c not in allowed_chars): return {'status': 409, 'msg': 'invalid characters in username', 'body': {}}
+    if (len(data['username']) > User.USERNAME_LENGTH):
+        return {'status': 409, 'msg': f'username must be {User.USERNAME} character or less.', 'body': {}}
+
+    ## validate email uses alphanumerical w/ underscores, periods, @ and is not greater than the max length
+    allowed_chars.append('@')
+    for c in data['username']:
+        if (c not in allowed_chars): return {'status': 409, 'msg': 'invalid characters in email', 'body': {}}
+    if (len(data['email']) > User.EMAIL_LENGTH):
+        return {'status': 409, 'msg': f'email must be {User.EMAIL_LENGTH} characters or less.', 'body': {}}
+
+    # Make sure required information provided is unique
+    user = User.query.filter_by(email=data['email']).first()
+    if (user): return {'status': 401, 'msg': f'email already in use.', 'body': {}}
+
+    user = User.query.filter_by(email=data['username']).first()
+    if (user): return {'status': 401, 'msg': f'username already in use.', 'body': {}}
+
+    # Validate username and email do not exist
+    try: u = User.create(data['username'], data['email'], data['password'], privilege=privilege)
+    except Exception as e: return {'status': 409, 'msg': 'could not create user', 'body': str(e)}
+
+    # Add new user to the database and return the requests response.
+    try:
         db.session.add(u)
         db.session.commit()
         return {'status': 200, 'msg': 'new user created', 'body': u.serialize}
     except: return {'status': 409, 'msg': 'could not save user to database', 'body': {}}
 
 
+    # Verify email and username are unique
+    return True
+
+@auth.route('/user/create', methods=['POST'])
+def create_user():
+    ''' 
+    Create a new user granted that all required information was provided and the email and username is unique. 
+    Return the status of the request 
+    '''
+    data = request.get_json()
+    return validate_and_create_user(data)
+
 
 
 @auth.route('/admin/create', methods=['POST'])
 def create_admin():
-    ''' Recieve an encoded admin token that contains the registration information of the new admin. '''
+    ''' 
+    Create a new user granted that all required information was provided and the email and username is unique.
+    Unlike create_user() the provided information should be encoded using the applications Admin Secret Key and passed using
+    the Authentication header. Return the status of the request 
+    '''
+    # Get the authroization token
     encoded_token = request.headers.get('Authorization')
     if (not encoded_token): return {'status': 409, 'msg': 'missing authentication token', 'body': {}}
 
+    # Decode the authorization token to reveal the fields required to create the new user.
     try: data = jwt.decode(encoded_token, Configuration.ADMIN_SECRET_KEY, 'HS256')
     except: return {'status': 401, 'msg': 'invalid authentication token', 'body': {}}
 
-    if ('email' not in data): return {'status': 409, 'msg': 'email field required', 'body': {}}
-    if ('password' not in data): return {'status': 409, 'msg': 'password field required', 'body': {}}
-
-    try: u = User.new(data['email'], data['password'], privilege=data['privilege'] or 1)
-    except: return {'status': 409, 'msg': 'could not create user', 'body': {}}
-
-    try:
-        db.session.add(u)
-        db.session.commit()
-        return {'status': 200, 'msg': 'new admin created', 'body': u.serialize}
-    except: return {'status': 409, 'msg': 'could not save user to database', 'body': {}}
-
+    return validate_and_create_user(data, 1)
+ 
 
 
 @auth.route('/user/<username>', methods=['GET'])
@@ -85,7 +114,7 @@ def get_user_by_email(email):
 
 
 
-@auth.route('/login')
+@auth.route('/login', methods=['POST'])
 def login():
     ''' Return an authorization token upon validation of the email and password '''
     data = request.get_json()
@@ -94,21 +123,37 @@ def login():
         return {'status': 409, 'msg': 'password required', 'body': {}}
     if ('email' not in data and 'username' not in data): 
         return {'status': 409, 'msg': 'email or username required', 'body': {}}
-
     
-    payload =  {k:v for k,v in data.items() if k in ['email', 'password']}
+    payload =  {k:v for k,v in data.items() if k in ['email', 'username']}
     user = User.query.filter_by(**payload).first()
 
     if (not user): return {'status': 404, 'msg': 'user not found', 'body': {}}
-    
-    
+    if (not check_password_hash(user.password_hash, data['password'])):
+        return {'status': 401, 'msg': 'password incorrect', 'body': {}}
+
     created = datetime.datetime.now()
     expires = created + datetime.timedelta(hours=4)
-    data = {'public_id': user.public_id, 'created': created, 'expires': expires }
+    token_data = {'public_id': user.public_id, 'created': created.isoformat(), 'expires': expires.isoformat()}
     
-    token = jwt.encode(data, Configuration.ADMIN_SECRET_KEY, 'HS256')
-    response = {'Authorization': token}
+    encoded_token = jwt.encode(token_data, Configuration.SECRET_KEY, 'HS256')
+    token = Token(user_id=user.id, encoded_token=encoded_token)
+    
+
+    db.session.add(token)
+    db.session.commit()
+
+
+    response = {'Authorization': encoded_token, 'user': user.serialize}
     return {'status': 200, 'msg': 'logged in', 'body': response}
+
+
+
+
+@auth.route('/token/validate', methods=['GET'])
+@require_token
+def validate_token(user, token):
+    return {'status': 200, 'msg': 'validated', 'body': {}}
+
 
 
 @auth.route('/logout', methods=['POST'])
@@ -122,7 +167,7 @@ def logout(user, token):
     
 
 
-@auth.route('/admin/demote', 'PATCH')
+@auth.route('/admin/demote', methods=['PATCH'])
 @require_admin
 def demote_admin(user, token):
     ''' Demote the requester from admin privileges if the request is an admin'''

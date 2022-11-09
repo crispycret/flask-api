@@ -45,6 +45,8 @@ migrate = Migrate(app, db, render_as_batch=True)
 
 
 from .auth import auth
-
 app.register_blueprint(auth)
+
+from .blog import blog
+app.register_blueprint(blog)
 

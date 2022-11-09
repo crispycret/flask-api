@@ -2,6 +2,8 @@
 import uuid
 from sqlalchemy import Table, Column, ForeignKey
 
+from werkzeug.security import generate_password_hash, check_password_hash
+
 from .. import db
 
 from .utils import uuid32, uuid64, unique_generator
@@ -45,11 +47,15 @@ blockers = db.Table('blockers',
 
 
 class User(db.Model):
+    
+    USERNAME_LENGTH = 64
+    EMAIL_LENGTH = 64
+
     ''' A user object containing an array of fields and relationships '''
     __tablename__ = 'user'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    username = db.Column(db.String(64), nullable=False, unique=True)
+    username = db.Column(db.String(USERNAME_LENGTH), nullable=False, unique=True)
     email = db.Column(db.String(64), nullable=False, unique=True)
     password_hash = db.Column(db.String(256), nullable=False)
     public_id = db.Column(db.String(32), nullable=False, unique=True)
@@ -75,6 +81,9 @@ class User(db.Model):
         backref=db.backref('followers', lazy='dynamic'), lazy='dynamic'
     )
 
+    posts = db.relationship('Post', backref='user', lazy=True, cascade='all, delete-orphan')
+    comments = db.relationship('Comment', backref='user', lazy=True, cascade='all, delete-orphan')
+
 
     @property
     def serialize(self):
@@ -86,7 +95,7 @@ class User(db.Model):
     @staticmethod
     def create(username, email, password, privilege=0):
         ''' '''
-        password_hash = password
+        password_hash = generate_password_hash(password)
         public_id = User.generate_public_id()
         private_id = User.generate_private_id()
         u = User( username=username, privilege=privilege,
