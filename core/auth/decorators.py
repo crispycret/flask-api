@@ -24,9 +24,9 @@ def require_token(f):
         if (not token): return {'status': 404, 'msg': 'token was not found', 'body': {}}
 
         if ('public_id' not in data):
-            return {'status': 404, 'msg': 'user was not found', 'body': {}}
+            return {'status': 409, 'msg': 'missing public_id in decoded token', 'body': {}}
         
-        user = User.query.filter_by().first()
+        user = User.query.filter_by(public_id=data['public_id']).first()
         if (not user): return {'status': 404, 'msg': 'user was not found', 'body': {}}
 
         return f(*args, user=user, token=token, **kwargs)

@@ -139,22 +139,36 @@ def create_post(user, token):
     data = request.get_json()
     data['user_id'] = user.id
 
+    print()
+    print('Recieved Data:')
+    print(data)
+
+    if ('title' not in data): return {'status': 409, 'msg': 'missing required `title` field', 'body': {}}
+    if ('body' not in data): return {'status': 409, 'msg': 'missing required `body` field', 'body': {}}
+
+
     # // Before creating the post check to see if the title is unique to this user
     try:
         post = Post.query.filter_by(user_id=user.id, title=data['title']).first()
         if (post):
+            print('\nPost Query Data:')
+            print(post.serialize)
             return {'status': 409, 'msg': 'post title already exists for this user', 'body': {}}
     except Exception as e:
         # Not expecting an error yet
-        return {'status': 400, 'msg': 'post not created', 'body': {}}
+        return {'status': 403, 'msg': 'post not created, Unkown error.', 'body': {}}
 
     try:
         post = Post.create(**data)
+    except Exception as e: 
+        return {'status': 400, 'msg': 'could not create post', 'body': str(e)}
+
+    try:
         db.session.add(post)
         db.session.commit()
         return {'status': 200, 'msg': 'post created', 'body': post.serialize}
     except Exception as e:
-        return {'status': 400, 'msg': 'post not created', 'body': str(e)}
+        return {'status': 400, 'msg': 'could not add post to database', 'body': str(e)}
 
 
 

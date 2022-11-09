@@ -6,10 +6,14 @@ from .. import db
 
 class Post(db.Model):
     __tablename__ = 'post'
+    # __table_args__ = (
+    #     db.UniqueConstraint(user_id, title, name='unique_user_title'),
+    # )
+
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    title = db.Column(db.String(126), unique=True, nullable=False)
+    title = db.Column(db.String(126), nullable=False)
     body = db.Column(db.LargeBinary, nullable=False)
     created_at = db.Column(db.DateTime(), nullable=False)
     updated_at = db.Column(db.DateTime(), nullable=True)
@@ -18,6 +22,8 @@ class Post(db.Model):
     draft = db.Column(db.Boolean, nullable=False, default=False)
 
     comments = db.relationship('Comment', backref='post', lazy=True, cascade='all, delete-orphan')
+
+    db.UniqueConstraint(user_id, title, name='unique_user_title'),
 
     @property
     def serialize(self):
