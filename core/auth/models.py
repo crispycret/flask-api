@@ -49,6 +49,7 @@ blockers = db.Table('blockers',
 class User(db.Model):
     
     USERNAME_LENGTH = 64
+    EMAIL_LENGTH = 64
 
     ''' A user object containing an array of fields and relationships '''
     __tablename__ = 'user'

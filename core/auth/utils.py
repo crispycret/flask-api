@@ -1,4 +1,5 @@
 import uuid
+import string
 
 def uuid32(): return uuid.uuid4().hex
 def uuid64(): return uuid.uuid4().hex + uuid.uuid4().hex

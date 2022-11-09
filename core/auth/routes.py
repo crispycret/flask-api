@@ -1,4 +1,5 @@
 import jwt
+import string
 import datetime
 from functools import wraps
 
@@ -13,60 +14,79 @@ from .models import User, Token
 from .decorators import require_token, require_admin
 
 
-
-
-
-
-@auth.route('/user/create', methods=['POST'])
-def create_user():
+def validate_and_create_user(data):
     ''' '''
-    data = request.get_json()
-
-    if ('username' not in data or 'email' not in data): return {'status': 409, 'msg': 'both username and email required', 'body': {}}
+    # Verify required infromation was provided
+    if ('username' not in data): return {'status': 409, 'msg': 'username field required', 'body': {}}
     if ('email' not in data): return {'status': 409, 'msg': 'email field required', 'body': {}}
     if ('password' not in data): return {'status': 409, 'msg': 'password field required', 'body': {}}
 
-    try: u = User.create(data['username'], data['email'], data['password'])
+    # Verify provided information is valid (meets constraints)
+
+    ## validate username uses alphanumerical w/ underscores and periods and is not greater than the max length
+    allowed_chars = [c for c in (string.ascii_letters + string.digits + '_.')]
+    for c in data['username']:
+        if (c not in allowed_chars): return {'status': 409, 'msg': 'invalid characters in username', 'body': {}}
+    if (len(data['username']) > User.USERNAME_LENGTH):
+        return {'status': 409, 'msg': f'username must be {User.USERNAME} character or less.', 'body': {}}
+
+    ## validate email uses alphanumerical w/ underscores, periods, @ and is not greater than the max length
+    allowed_chars.append('@')
+    for c in data['username']:
+        if (c not in allowed_chars): return {'status': 409, 'msg': 'invalid characters in email', 'body': {}}
+    if (len(data['email']) > User.EMAIL_LENGTH):
+        return {'status': 409, 'msg': f'email must be {User.EMAIL_LENGTH} characters or less.', 'body': {}}
+
+    # Make sure required information provided is unique
+    user = User.query.filter_by(email=data['email']).first()
+    if (user): return {'status': 401, 'msg': f'email already in use.', 'body': {}}
+
+    user = User.query.filter_by(email=data['username']).first()
+    if (user): return {'status': 401, 'msg': f'username already in use.', 'body': {}}
+
+
+    # Validate username and email do not exist
+    try: u = User.create(data['username'], data['email'], data['password'], privilege=data['privilege'] or 0)
     except: return {'status': 409, 'msg': 'could not create user', 'body': {}}
-    
-    try: 
+
+    # Add new user to the database and return the requests response.
+    try:
         db.session.add(u)
         db.session.commit()
         return {'status': 200, 'msg': 'new user created', 'body': u.serialize}
     except: return {'status': 409, 'msg': 'could not save user to database', 'body': {}}
 
 
+    # Verify email and username are unique
+    return True
+
+@auth.route('/user/create', methods=['POST'])
+def create_user():
+    ''' 
+    Create a new user granted that all required information was provided and the email and username is unique. 
+    Return the status of the request 
+    '''
+    return validate_and_create_user(request.get_json())
+
 
 
 @auth.route('/admin/create', methods=['POST'])
 def create_admin():
-    ''' Recieve an encoded admin token that contains the registration information of the new admin. '''
+    ''' 
+    Create a new user granted that all required information was provided and the email and username is unique.
+    Unlike create_user() the provided information should be encoded using the applications Admin Secret Key and passed using
+    the Authentication header. Return the status of the request 
+    '''
+    # Get the authroization token
     encoded_token = request.headers.get('Authorization')
     if (not encoded_token): return {'status': 409, 'msg': 'missing authentication token', 'body': {}}
 
+    # Decode the authorization token to reveal the fields required to create the new user.
     try: data = jwt.decode(encoded_token, Configuration.ADMIN_SECRET_KEY, 'HS256')
     except: return {'status': 401, 'msg': 'invalid authentication token', 'body': {}}
 
-    if ('username' not in data): return {'status': 409, 'msg': 'username field required', 'body': {}}
-    if ('email' not in data): return {'status': 409, 'msg': 'email field required', 'body': {}}
-    if ('password' not in data): return {'status': 409, 'msg': 'password field required', 'body': {}}
-
-    # validate username as alphanumerical w/ underscores only with a max_length
-    import string
-    allowed_chars = [c for c in (string.ascii_letters + string.digits)]
-    allowed_chars.append('_')
-
-
-
-    try: u = User.create(data['username'], data['email'], data['password'], privilege=data['privilege'] or 1)
-    except: return {'status': 409, 'msg': 'could not create user', 'body': {}}
-
-    try:
-        db.session.add(u)
-        db.session.commit()
-        return {'status': 200, 'msg': 'new admin created', 'body': u.serialize}
-    except: return {'status': 409, 'msg': 'could not save user to database', 'body': {}}
-
+    return validate_and_create_user(data)
+ 
 
 
 @auth.route('/user/<username>', methods=['GET'])

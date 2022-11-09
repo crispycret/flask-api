@@ -62,3 +62,8 @@ def require_admin(f):
 
         return f(*args, user=user, token=token, **kwargs)
     return func
+
+
+
+def validate_user_data (data):
+    
