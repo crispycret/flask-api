@@ -147,6 +147,15 @@ def login():
     return {'status': 200, 'msg': 'logged in', 'body': response}
 
 
+
+
+@auth.route('/token/validate', methods=['GET'])
+@require_token
+def validate_token(user, token):
+    return {'status': 200, 'msg': 'validated', 'body': {}}
+
+
+
 @auth.route('/logout', methods=['POST'])
 @require_token
 def logout(user, token):
