@@ -139,10 +139,6 @@ def create_post(user, token):
     data = request.get_json()
     data['user_id'] = user.id
 
-    print()
-    print('Recieved Data:')
-    print(data)
-
     if ('title' not in data): return {'status': 409, 'msg': 'missing required `title` field', 'body': {}}
     if ('body' not in data): return {'status': 409, 'msg': 'missing required `body` field', 'body': {}}
 
@@ -151,8 +147,6 @@ def create_post(user, token):
     try:
         post = Post.query.filter_by(user_id=user.id, title=data['title']).first()
         if (post):
-            print('\nPost Query Data:')
-            print(post.serialize)
             return {'status': 409, 'msg': 'post title already exists for this user', 'body': {}}
     except Exception as e:
         # Not expecting an error yet

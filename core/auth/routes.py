@@ -130,8 +130,6 @@ def login():
     if (not user): return {'status': 404, 'msg': 'user not found', 'body': {}}
     if (not check_password_hash(user.password_hash, data['password'])):
         return {'status': 401, 'msg': 'password incorrect', 'body': {}}
-    
-    print (f'\n\nLogin User ID: {user.id}\n\n')
 
     created = datetime.datetime.now()
     expires = created + datetime.timedelta(hours=4)
@@ -140,8 +138,6 @@ def login():
     encoded_token = jwt.encode(token_data, Configuration.SECRET_KEY, 'HS256')
     token = Token(user_id=user.id, encoded_token=encoded_token)
     
-    print (f'\n\nLogin Token: {token.serialize}\n\n')
-
 
     db.session.add(token)
     db.session.commit()
