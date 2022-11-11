@@ -165,6 +165,7 @@ def logout(user, token):
     ''' Confirm the removal of the provided authorization token. '''
     try:
         db.session.delete(token)
+        db.session.commit()
         return {'status': 200, 'msg': 'logged out', 'body': {}}
     except: return {'status': 409, 'msg': 'could not properly logout', 'body': {}}
     
