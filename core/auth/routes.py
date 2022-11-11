@@ -28,7 +28,7 @@ def validate_and_create_user(data, privilege=0):
     for c in data['username']:
         if (c not in allowed_chars): return {'status': 409, 'msg': 'invalid characters in username', 'body': {}}
     if (len(data['username']) > User.USERNAME_LENGTH):
-        return {'status': 409, 'msg': f'username must be {User.USERNAME} character or less.', 'body': {}}
+        return {'status': 409, 'msg': f'username must be {User.USERNAME_LENGTH} character or less.', 'body': {}}
 
     ## validate email uses alphanumerical w/ underscores, periods, @ and is not greater than the max length
     allowed_chars.append('@')
@@ -41,10 +41,10 @@ def validate_and_create_user(data, privilege=0):
     user = User.query.filter_by(email=data['email']).first()
     if (user): return {'status': 401, 'msg': f'email already in use.', 'body': {}}
 
-    user = User.query.filter_by(email=data['username']).first()
+    user = User.query.filter_by(username=data['username']).first()
     if (user): return {'status': 401, 'msg': f'username already in use.', 'body': {}}
 
-    # Validate username and email do not exist
+    # Create use
     try: u = User.create(data['username'], data['email'], data['password'], privilege=privilege)
     except Exception as e: return {'status': 409, 'msg': 'could not create user', 'body': str(e)}
 
@@ -59,7 +59,10 @@ def validate_and_create_user(data, privilege=0):
     # Verify email and username are unique
     return True
 
-@auth.route('/user/create', methods=['POST'])
+
+
+
+@auth.route('/users/create', methods=['POST'])
 def create_user():
     ''' 
     Create a new user granted that all required information was provided and the email and username is unique. 
@@ -131,6 +134,7 @@ def login():
     if (not check_password_hash(user.password_hash, data['password'])):
         return {'status': 401, 'msg': 'password incorrect', 'body': {}}
 
+    # Create Authentication Token Upon Success.
     created = datetime.datetime.now()
     expires = created + datetime.timedelta(hours=4)
     token_data = {'public_id': user.public_id, 'created': created.isoformat(), 'expires': expires.isoformat()}
@@ -138,10 +142,9 @@ def login():
     encoded_token = jwt.encode(token_data, Configuration.SECRET_KEY, 'HS256')
     token = Token(user_id=user.id, encoded_token=encoded_token)
     
-
+    # Save to database
     db.session.add(token)
     db.session.commit()
-
 
     response = {'Authorization': encoded_token, 'user': user.serialize}
     return {'status': 200, 'msg': 'logged in', 'body': response}
@@ -182,7 +185,7 @@ def demote_admin(user, token):
 
 @auth.route('/user/<username>/follow', methods=['POST'])
 @require_token
-def follow_user(username, user):
+def follow_user(username, user, token):
     ''' create a realtionship between the authenticated user and the specified user '''
     
     target_user = User.query.filter_by(username=username).first()
@@ -194,6 +197,25 @@ def follow_user(username, user):
     except: return {'status': 409, 'msg': 'could not follow user', 'body': {}}
     return {'status': 200, 'msg': f'following {username}', 'body': {}}
     
+
+
+@auth.route('/user/<username>/followers', methods=['GET'])
+def get_followers(username):
+    ''' create a realtionship between the authenticated user and the specified user '''
+    
+    target_user = User.query.filter_by(username=username).first()
+    if (not target_user): {'status': 404, 'msg': 'target user not found', 'body': {}}
+
+    response = {
+        'user': target_user.serialize,
+        'followers': [follower.serialize for follower in target_user.followers] 
+        
+    }
+    return {'status': 200, 'msg': f'follwers of {target_user.username}', 'body': response}
+    
+
+
+
 
 @auth.route('/user/<username>/block', methods=['POST'])
 @require_token
