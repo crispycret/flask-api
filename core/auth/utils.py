@@ -12,3 +12,6 @@ def unique_generator(cls, field, value):
     if (o): return unique_generator(cls, field, value)
     return value
 
+
+
+def verify_user_contact_info(): pass
