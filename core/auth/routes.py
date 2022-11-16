@@ -14,6 +14,28 @@ from .models import User, Token
 from .decorators import require_token, require_admin
 
 
+__docs__ = '''
+    routes:
+     * create_user - create a basic user and trigger a validate contact information event.
+     * create_admin - create an admin user and trigger a validate contact information event.
+     * update_user - update a user's info while protecting immutable variables based on privilege state.
+     * login - validate a user's credentials and return a token used for authenticating user actions and events.
+     * validate_token - return the authentication state of a token.
+     * logout - destory the authenticity of an authentic token. 
+     * get_user - retrieve
+     * get_user_by_id - merge all alternative get_user_... functions with the the get_user function and complexify the request data.
+     * * * * request data should define the search goals.
+     * get_users - condense the get_user function into this route by setting a default limit of 1 (Implement Pagnation)
+
+    functions:
+    * validate_and_create_user - Highest level common function to create a user with unvalidated data.
+
+    notes:
+    * * split this blueprint to seperate social functions (social should utilize auth).
+'''
+
+
+
 def validate_and_create_user(data, privilege=0):
     ''' '''
     # Verify required infromation was provided
