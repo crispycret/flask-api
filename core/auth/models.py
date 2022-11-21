@@ -56,11 +56,12 @@ class User(db.Model):
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     username = db.Column(db.String(USERNAME_LENGTH), nullable=False, unique=True)
-    email = db.Column(db.String(64), nullable=False, unique=True)
+    email = db.Column(db.String(128), nullable=False, unique=True)
     password_hash = db.Column(db.String(256), nullable=False)
     public_id = db.Column(db.String(32), nullable=False, unique=True)
     private_id = db.Column(db.String(64), nullable=False, unique=True)
     privilege = db.Column(db.Integer, default=0)
+    email_verified = db.Column(db.Boolean, nullable=True, default=False)
 
     # Relationships
     tokens = db.relationship('Token', backref='user', lazy=True, cascade='all, delete-orphan')
@@ -89,7 +90,8 @@ class User(db.Model):
     def serialize(self):
         return {
             'id': self.id, 'username': self.username, 'email': self.email, 
-            'public_id': self.public_id, 'privilege': self.privilege
+            'public_id': self.public_id, 'privilege': self.privilege,
+            'email_verified': self.email_verified
         }
 
     @staticmethod

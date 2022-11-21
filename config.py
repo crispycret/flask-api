@@ -27,5 +27,10 @@ class Configuration (object):
     SQLALCHEMY_DATABASE_URI = __SQLALCHEMY_DATABASE_URI__
     SQLALCHEMY_TRACK_MODIFICATIONS = True
 
+    TWILIO_ACCOUNT_SID = os.environ.get('TWILIO_ACCOUNT_SID')
+    TWILIO_AUTH_TOKEN = os.environ.get('TWILIO_AUTH_TOKEN')
+    TWILIO_VERIFY_SERVICE = os.environ.get('TWILIO_VERIFY_SERVICE')
+    SENDGRID_API_KEY = os.environ.get('SENDGRID_API_KEY') 
+
     
     

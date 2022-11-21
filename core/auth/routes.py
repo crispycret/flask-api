@@ -6,7 +6,7 @@ from functools import wraps
 from flask import request
 from werkzeug.security import check_password_hash
 
-from core import db
+from core import db, twilio_client
 from core.auth import auth
 from config import Configuration
 
@@ -83,8 +83,10 @@ def validate_and_create_user(data, privilege=0):
 
 
 
+###########################################################################################################################
 
-@auth.route('/users/create', methods=['POST'])
+
+@auth.route('/create_user', methods=['POST'])
 def create_user():
     ''' 
     Create a new user granted that all required information was provided and the email and username is unique. 
@@ -95,7 +97,7 @@ def create_user():
 
 
 
-@auth.route('/admin/create', methods=['POST'])
+@auth.route('/create_admin', methods=['POST'])
 def create_admin():
     ''' 
     Create a new user granted that all required information was provided and the email and username is unique.
@@ -112,6 +114,58 @@ def create_admin():
 
     return validate_and_create_user(data, 1)
  
+
+
+###########################################################################################################################
+
+
+@auth.route('/send_email_verification', methods=['POST'])
+@require_token
+def send_email_verification(user, token):
+    ''' Provided the user's email is not already authenticated, send a verification email to the user. '''
+
+    try:
+        if (user.email_verified): 
+            return {'status': 200, 'msg': f'{user.email} is already verified', 'body': {}}
+    except:
+        return {'status': 500, 'msg': f'email verification precheck failed (Unkown)', 'body': {}}
+
+    try:
+        verification = twilio_client.verify \
+        .services(Configuration.TWILIO_VERIFY_SERVICE) \
+        .verifications \
+        .create(to=user.email, channel='email')
+        return {'status': 201, 'msg': f'verifcation code sent to {user.email}', 'body': {}}
+    except:
+        return {'status': 500, 'msg': f'failed to send verification code to email', 'body': {}}
+
+
+@auth.route('/confirm_email_verification', methods=['POST'])
+@require_token
+def confirm_email_verification(user, token):
+    ''' Requires the value sent to the user email be returned. Upon success marks the user as email verified. '''
+    data = request.get_json()
+
+    if ('verification_code' not in data): 
+        return {'status': 400, 'msg': f'verification_code is missing', 'body': {}}
+
+    try:
+        code = data['verification_code']
+        check = twilio_client.verify \
+            .services(Configuration.TWILIO_VERIFY_SERVICE) \
+            .verification_checks.create(to=user.email, code=code)
+    except:
+        return {'status': 500, 'msg': f'error communicating with twilio.', 'body': {}}
+        
+    if (check.status == 'approved'):
+        user.email_verified = True
+        db.session.commit()
+        return {'status': 200, 'msg': f'{user.email} is now verified', 'body': {'value': True}}
+
+    return {'status': 401, 'msg': f'failed to verify {user.email}', 'body': {'value': False}}
+
+
+###########################################################################################################################
 
 
 @auth.route('/user/<username>', methods=['GET'])
@@ -137,6 +191,7 @@ def get_user_by_email(email):
     return {'status': 200, 'msg': 'user found', 'body': u.serialize}
 
 
+###########################################################################################################################
 
 
 @auth.route('/login', methods=['POST'])
@@ -191,6 +246,9 @@ def logout(user, token):
         return {'status': 200, 'msg': 'logged out', 'body': {}}
     except: return {'status': 409, 'msg': 'could not properly logout', 'body': {}}
     
+
+
+###########################################################################################################################
 
 
 @auth.route('/admin/demote', methods=['PATCH'])

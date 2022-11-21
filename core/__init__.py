@@ -5,6 +5,7 @@ from flask_cors import CORS
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import MetaData
+from twilio.rest import Client as TwilioClient
 
 from config import Configuration
 
@@ -24,6 +25,9 @@ CORS(app)
 
 # Register application configuration settings
 app.config.from_object(Configuration)
+
+
+twilio_client = TwilioClient()
 
 # Create the database connection and register the application
 db = SQLAlchemy(app)
