@@ -8,6 +8,18 @@ Think of all the features that will go into version 0.1.2
 Build a writeup for what this version does.
  * DFDs, UMLs, User Stories
 
+[Production] 
+ * Dump production database. 
+ * Build script to populate dumped data into a new postgres db (Admin Feature)
+ * Attempt to upgrade database
+    * * migrations -> migration.dev
+    * * migrations.old -> migrations
+    * * heroko push (revist Blog on this)
+    * * Use population script if nessecarry
+ * Maintence mode both blog-web and blog-api
+ * Upgrade blog-web to 0.1.2
+ * upgrade blog-api to 0.1.2 of the flask-api repo.
+
 
 [BlogWebApp]
  * User dashboard shows posts they own.
