@@ -276,9 +276,10 @@ def demote_admin(user, token):
 
 #########################################################################################################################
 
-@auth.route('/delete_user')
+@auth.route('/delete_user', methods=['POST'])
+@require_token
 def delete_user(user, token):
-    ''' '''
+    ''' Delete a user after validating the request for authentication '''
     try:
         db.session.delete(user)
         db.session.commit()
