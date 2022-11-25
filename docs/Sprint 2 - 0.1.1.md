@@ -25,11 +25,11 @@
     * * Do Nothing About Email Verification 
         Upon successful registration set the `user` field `email_verifed` to `false`
 
-    [SendEmailVerification]
+    [SendEmailVerification] [COMPLETE]
     * * Send Email Verification w/ Twilio / SendGrid
         * Send verification email to an existing user if the `user` field `email_verifed` is `false`
 
-    [ConfirmEmailVerfication]
+    [ConfirmEmailVerfication] [COMPLETE]
     * * Confirm the Twilio / SendGrid Verification
         * Provided the verification value sent to the email is valid, set the `user` field `email_verified` to `true` 
 
@@ -37,9 +37,7 @@
 
 
 [BlogWebApp]
-
 * 
- 
     [Register]
     * * User submits registration from
         

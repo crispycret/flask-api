@@ -6,7 +6,7 @@ from functools import wraps
 from flask import request
 from werkzeug.security import check_password_hash
 
-from core import db
+from core import db, twilio_client
 from core.auth import auth
 from config import Configuration
 
@@ -21,6 +21,7 @@ __docs__ = '''
      * update_user - update a user's info while protecting immutable variables based on privilege state.
      * login - validate a user's credentials and return a token used for authenticating user actions and events.
      * validate_token - return the authentication state of a token.
+     * 
      * logout - destory the authenticity of an authentic token. 
      * get_user - retrieve
      * get_user_by_id - merge all alternative get_user_... functions with the the get_user function and complexify the request data.
@@ -30,8 +31,6 @@ __docs__ = '''
     functions:
     * validate_and_create_user - Highest level common function to create a user with unvalidated data.
 
-    notes:
-    * * split this blueprint to seperate social functions (social should utilize auth).
 '''
 
 
@@ -83,8 +82,10 @@ def validate_and_create_user(data, privilege=0):
 
 
 
+###########################################################################################################################
 
-@auth.route('/users/create', methods=['POST'])
+
+@auth.route('/create_user', methods=['POST'])
 def create_user():
     ''' 
     Create a new user granted that all required information was provided and the email and username is unique. 
@@ -95,7 +96,7 @@ def create_user():
 
 
 
-@auth.route('/admin/create', methods=['POST'])
+@auth.route('/create_admin', methods=['POST'])
 def create_admin():
     ''' 
     Create a new user granted that all required information was provided and the email and username is unique.
@@ -114,7 +115,69 @@ def create_admin():
  
 
 
+###########################################################################################################################
+
+
+@auth.route('/send_email_verification', methods=['POST'])
+@require_token
+def send_email_verification(user, token):
+    ''' Provided the user's email is not already authenticated, send a verification email to the user. '''
+
+    try:
+        if (user.email_verified): 
+            return {'status': 200, 'msg': f'{user.email} is already verified', 'body': {}}
+    except:
+        return {'status': 500, 'msg': f'email verification precheck failed (Unkown)', 'body': {}}
+
+    try:
+        verification = twilio_client.verify \
+        .services(Configuration.TWILIO_VERIFY_SERVICE) \
+        .verifications \
+        .create(to=user.email, channel='email')
+        return {'status': 201, 'msg': f'verifcation code sent to {user.email}', 'body': {}}
+    except:
+        return {'status': 500, 'msg': f'failed to send verification code to email', 'body': {}}
+
+
+@auth.route('/confirm_email_verification', methods=['POST'])
+@require_token
+def confirm_email_verification(user, token):
+    ''' Requires the value sent to the user email be returned. Upon success marks the user as email verified. '''
+    data = request.get_json()
+
+    if ('verification_code' not in data): 
+        return {'status': 400, 'msg': f'verification_code is missing', 'body': {}}
+
+    try:
+        code = data['verification_code']
+        check = twilio_client.verify \
+            .services(Configuration.TWILIO_VERIFY_SERVICE) \
+            .verification_checks.create(to=user.email, code=code)
+    except:
+        return {'status': 500, 'msg': f'error communicating with twilio.', 'body': {}}
+        
+    if (check.status == 'approved'):
+        user.email_verified = True
+        db.session.commit()
+        return {'status': 200, 'msg': f'{user.email} is now verified', 'body': {'value': True}}
+
+    return {'status': 401, 'msg': f'failed to verify {user.email}', 'body': {'value': False}}
+
+
+###########################################################################################################################
+
+@auth.route('/user')
+@require_token
+def authorized_get_user(user, token):
+    ''' Upon validating user token retrieve user information that is sensitive. '''
+    return {'status': 200, 'msg': 'user found', 'body': user.serialize}
+
+
+#######
+####### Get Public User Information Only (Unauthorized  )
+#######
 @auth.route('/user/<username>', methods=['GET'])
+@require_token
 def get_user(username):
     ''' get a user by username '''
     u = User.query.filter_by(username=username).first()
@@ -122,6 +185,7 @@ def get_user(username):
     return {'status': 200, 'msg': 'user found', 'body': u.serialize}
 
 @auth.route('/user/id/<id>', methods=['GET'])
+@require_token
 def get_user_by_id(id):
     ''' get a user by id '''
     u = User.query.filter_by(id=id).first()
@@ -130,6 +194,7 @@ def get_user_by_id(id):
 
 
 @auth.route('/user/email/<email>', methods=['GET'])
+@require_token
 def get_user_by_email(email):
     ''' get a user by email '''
     u = User.query.filter_by(email=email).first()
@@ -137,6 +202,7 @@ def get_user_by_email(email):
     return {'status': 200, 'msg': 'user found', 'body': u.serialize}
 
 
+###########################################################################################################################
 
 
 @auth.route('/login', methods=['POST'])
@@ -193,6 +259,9 @@ def logout(user, token):
     
 
 
+###########################################################################################################################
+
+
 @auth.route('/admin/demote', methods=['PATCH'])
 @require_admin
 def demote_admin(user, token):
@@ -202,5 +271,20 @@ def demote_admin(user, token):
         db.session.commit()
         return {'status': 200, 'msg': 'demotion successful', 'body': {}}
     except: return {'status': 409, 'msg': 'could not demote privileges', 'body': {}}
+
+
+
+#########################################################################################################################
+
+@auth.route('/delete_user', methods=['POST'])
+@require_token
+def delete_user(user, token):
+    ''' Delete a user after validating the request for authentication '''
+    try:
+        db.session.delete(user)
+        db.session.commit()
+        return {'status': 200, 'msg': 'user deleted', 'body': {}}
+    except: return {'status': 400, 'msg': 'could not delete user', 'body': {}}
+
 
 
