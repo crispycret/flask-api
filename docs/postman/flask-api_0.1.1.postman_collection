@@ -7,38 +7,6 @@
 	},
 	"item": [
 		{
-			"name": "create_user",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\r\n    \"username\": \"bnadeau\",\r\n    \"email\": \"bnadeau.dev@gmail.com\",\r\n    \"password\": \"test\"\r\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "http://127.0.0.1:5000/auth/create_user",
-					"protocol": "http",
-					"host": [
-						"127",
-						"0",
-						"0",
-						"1"
-					],
-					"port": "5000",
-					"path": [
-						"auth",
-						"create_user"
-					]
-				}
-			},
-			"response": []
-		},
-		{
 			"name": "create_admin",
 			"request": {
 				"method": "POST",
@@ -71,6 +39,38 @@
 					"path": [
 						"auth",
 						"create_admin"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "create_user",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"username\": \"bnadeau\",\r\n    \"email\": \"bnadeau.dev@gmail.com\",\r\n    \"password\": \"test\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:5000/auth/create_user",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "5000",
+					"path": [
+						"auth",
+						"create_user"
 					]
 				}
 			},
@@ -116,6 +116,38 @@
 		},
 		{
 			"name": "login",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"email\": \"bnadeau.dev@gmail.com\",\r\n    \"password\": \"test\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:5000/auth/login",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "5000",
+					"path": [
+						"auth",
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "logout",
 			"request": {
 				"method": "POST",
 				"header": [],
@@ -214,19 +246,22 @@
 			"response": []
 		},
 		{
-			"name": "create_post",
+			"name": "get_user [Authorized]",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
 			"request": {
-				"method": "POST",
+				"method": "GET",
 				"header": [
 					{
 						"key": "Authorization",
-						"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwdWJsaWNfaWQiOiI2NzM3ZWRmYjY3ZWU0OGYxYmUyYTc5MDljZWM4ZGYyNiIsImNyZWF0ZWQiOiIyMDIyLTExLTIxVDAzOjE3OjMyLjczODE3MiIsImV4cGlyZXMiOiIyMDIyLTExLTIxVDA3OjE3OjMyLjczODE3MiJ9.w3PctgEprHohr8cFII9rEo6urJXIxVTSjfhY5ETo9nY",
+						"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwdWJsaWNfaWQiOiIxZjU0YTE5YjMzODU0NTUwYmVhNzIxZjA0NmZlYTFmZSIsImNyZWF0ZWQiOiIyMDIyLTExLTA3VDA0OjI0OjAxLjk5NTM0OCIsImV4cGlyZXMiOiIyMDIyLTExLTA3VDA4OjI0OjAxLjk5NTM0OCJ9.z1y_qUgnNgiWqUBJsQ5kU8su_bnU18wgEYmqiN-8LKM",
 						"type": "text"
 					}
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"title\": \"First Blog Post\",\r\n    \"body\": \"Content goes here\"\r\n}",
+					"raw": "{\r\n    \"title\": \"First Blog Post\",\r\n    \"Body\": \"Content goes here\"\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -234,7 +269,7 @@
 					}
 				},
 				"url": {
-					"raw": "http://127.0.0.1:5000/blog/post/create",
+					"raw": "http://127.0.0.1:5000/auth/user",
 					"protocol": "http",
 					"host": [
 						"127",
@@ -244,16 +279,15 @@
 					],
 					"port": "5000",
 					"path": [
-						"blog",
-						"post",
-						"create"
+						"auth",
+						"user"
 					]
 				}
 			},
 			"response": []
 		},
 		{
-			"name": "get_user",
+			"name": "get_user/<username>",
 			"protocolProfileBehavior": {
 				"disableBodyPruning": true
 			},
@@ -455,6 +489,45 @@
 						"user",
 						"1",
 						"posts"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "create_post",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwdWJsaWNfaWQiOiI2NzM3ZWRmYjY3ZWU0OGYxYmUyYTc5MDljZWM4ZGYyNiIsImNyZWF0ZWQiOiIyMDIyLTExLTIxVDAzOjE3OjMyLjczODE3MiIsImV4cGlyZXMiOiIyMDIyLTExLTIxVDA3OjE3OjMyLjczODE3MiJ9.w3PctgEprHohr8cFII9rEo6urJXIxVTSjfhY5ETo9nY",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"title\": \"First Blog Post\",\r\n    \"body\": \"Content goes here\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:5000/blog/post/create",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "5000",
+					"path": [
+						"blog",
+						"post",
+						"create"
 					]
 				}
 			},
