@@ -1,0 +1,464 @@
+{
+	"info": {
+		"_postman_id": "b215dbdb-0112-428d-b34b-bc7ac1ff12a6",
+		"name": "flask-api",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "20978554"
+	},
+	"item": [
+		{
+			"name": "create_user",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"username\": \"bnadeau\",\r\n    \"email\": \"bnadeau.dev@gmail.com\",\r\n    \"password\": \"test\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:5000/auth/create_user",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "5000",
+					"path": [
+						"auth",
+						"create_user"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "create_admin",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImJyYW5kb24iLCJlbWFpbCI6ImVtYWlsQGJuYWRlYXUuZGV2IiwicGFzc3dvcmQiOiJ0ZXN0In0.2MsAsqPPOTESwhEhNj-qYbPsw_9-KJ1_G7SIdsu21Mw",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"username\": \"brandon1\",\r\n    \"email\": \"email1@bnadeau.dev\",\r\n    \"password\": \"test\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:5000/auth/create_admin",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "5000",
+					"path": [
+						"auth",
+						"create_admin"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "delete_user",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwdWJsaWNfaWQiOiIxMGJjNWFkMzdiZWY0YzIyYmU4NTBiZjdjNWZjZTIzYSIsImNyZWF0ZWQiOiIyMDIyLTExLTI1VDAwOjIyOjM2LjU3NzY4MiIsImV4cGlyZXMiOiIyMDIyLTExLTI1VDA0OjIyOjM2LjU3NzY4MiJ9.uhHCc3lSUvkL7VsMFsHjAJPIMDaS3CEQnoLvr3WWS3w",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:5000/auth/delete_user",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "5000",
+					"path": [
+						"auth",
+						"delete_user"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "login",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"email\": \"bnadeau.dev@gmail.com\",\r\n    \"password\": \"test\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:5000/auth/login",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "5000",
+					"path": [
+						"auth",
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "send_email_verification",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwdWJsaWNfaWQiOiI2NzM3ZWRmYjY3ZWU0OGYxYmUyYTc5MDljZWM4ZGYyNiIsImNyZWF0ZWQiOiIyMDIyLTExLTIxVDAzOjEzOjMyLjc3NjIyMSIsImV4cGlyZXMiOiIyMDIyLTExLTIxVDA3OjEzOjMyLjc3NjIyMSJ9.qw9OVqzhzRjOezHXIzeJgcFSebU6N7szzPdPyx_cpwg",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://127.0.0.1:5000/auth/send_email_verification",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "5000",
+					"path": [
+						"auth",
+						"send_email_verification"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "confirm_email_verification",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwdWJsaWNfaWQiOiI2NzM3ZWRmYjY3ZWU0OGYxYmUyYTc5MDljZWM4ZGYyNiIsImNyZWF0ZWQiOiIyMDIyLTExLTIxVDAzOjE3OjMyLjczODE3MiIsImV4cGlyZXMiOiIyMDIyLTExLTIxVDA3OjE3OjMyLjczODE3MiJ9.w3PctgEprHohr8cFII9rEo6urJXIxVTSjfhY5ETo9nY",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"verification_code\": \"670927\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:5000/auth/confirm_email_verification",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "5000",
+					"path": [
+						"auth",
+						"confirm_email_verification"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "create_post",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwdWJsaWNfaWQiOiI2NzM3ZWRmYjY3ZWU0OGYxYmUyYTc5MDljZWM4ZGYyNiIsImNyZWF0ZWQiOiIyMDIyLTExLTIxVDAzOjE3OjMyLjczODE3MiIsImV4cGlyZXMiOiIyMDIyLTExLTIxVDA3OjE3OjMyLjczODE3MiJ9.w3PctgEprHohr8cFII9rEo6urJXIxVTSjfhY5ETo9nY",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"title\": \"First Blog Post\",\r\n    \"body\": \"Content goes here\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:5000/blog/post/create",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "5000",
+					"path": [
+						"blog",
+						"post",
+						"create"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get_user",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwdWJsaWNfaWQiOiIxZjU0YTE5YjMzODU0NTUwYmVhNzIxZjA0NmZlYTFmZSIsImNyZWF0ZWQiOiIyMDIyLTExLTA3VDA0OjI0OjAxLjk5NTM0OCIsImV4cGlyZXMiOiIyMDIyLTExLTA3VDA4OjI0OjAxLjk5NTM0OCJ9.z1y_qUgnNgiWqUBJsQ5kU8su_bnU18wgEYmqiN-8LKM",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"title\": \"First Blog Post\",\r\n    \"Body\": \"Content goes here\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:5000/blog/posts",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "5000",
+					"path": [
+						"blog",
+						"posts"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get_posts",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwdWJsaWNfaWQiOiIxZjU0YTE5YjMzODU0NTUwYmVhNzIxZjA0NmZlYTFmZSIsImNyZWF0ZWQiOiIyMDIyLTExLTA3VDA0OjI0OjAxLjk5NTM0OCIsImV4cGlyZXMiOiIyMDIyLTExLTA3VDA4OjI0OjAxLjk5NTM0OCJ9.z1y_qUgnNgiWqUBJsQ5kU8su_bnU18wgEYmqiN-8LKM",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"title\": \"First Blog Post\",\r\n    \"Body\": \"Content goes here\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:5000/blog/posts",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "5000",
+					"path": [
+						"blog",
+						"posts"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get_post_by_id",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwdWJsaWNfaWQiOiIxZjU0YTE5YjMzODU0NTUwYmVhNzIxZjA0NmZlYTFmZSIsImNyZWF0ZWQiOiIyMDIyLTExLTA3VDA0OjI0OjAxLjk5NTM0OCIsImV4cGlyZXMiOiIyMDIyLTExLTA3VDA4OjI0OjAxLjk5NTM0OCJ9.z1y_qUgnNgiWqUBJsQ5kU8su_bnU18wgEYmqiN-8LKM",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"title\": \"First Blog Post\",\r\n    \"Body\": \"Content goes here\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:5000/blog/post/1",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "5000",
+					"path": [
+						"blog",
+						"post",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get_posts_by_ids",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwdWJsaWNfaWQiOiIxZjU0YTE5YjMzODU0NTUwYmVhNzIxZjA0NmZlYTFmZSIsImNyZWF0ZWQiOiIyMDIyLTExLTA3VDA0OjI0OjAxLjk5NTM0OCIsImV4cGlyZXMiOiIyMDIyLTExLTA3VDA4OjI0OjAxLjk5NTM0OCJ9.z1y_qUgnNgiWqUBJsQ5kU8su_bnU18wgEYmqiN-8LKM",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"ids\": [1]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:5000/blog/posts",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "5000",
+					"path": [
+						"blog",
+						"posts"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get_posts_by_user",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwdWJsaWNfaWQiOiIxZjU0YTE5YjMzODU0NTUwYmVhNzIxZjA0NmZlYTFmZSIsImNyZWF0ZWQiOiIyMDIyLTExLTA3VDA0OjI0OjAxLjk5NTM0OCIsImV4cGlyZXMiOiIyMDIyLTExLTA3VDA4OjI0OjAxLjk5NTM0OCJ9.z1y_qUgnNgiWqUBJsQ5kU8su_bnU18wgEYmqiN-8LKM",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"ids\": [1]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:5000/blog/user/1/posts",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "5000",
+					"path": [
+						"blog",
+						"user",
+						"1",
+						"posts"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
