@@ -21,6 +21,7 @@ __docs__ = '''
      * update_user - update a user's info while protecting immutable variables based on privilege state.
      * login - validate a user's credentials and return a token used for authenticating user actions and events.
      * validate_token - return the authentication state of a token.
+     * 
      * logout - destory the authenticity of an authentic token. 
      * get_user - retrieve
      * get_user_by_id - merge all alternative get_user_... functions with the the get_user function and complexify the request data.
@@ -30,8 +31,6 @@ __docs__ = '''
     functions:
     * validate_and_create_user - Highest level common function to create a user with unvalidated data.
 
-    notes:
-    * * split this blueprint to seperate social functions (social should utilize auth).
 '''
 
 
@@ -167,8 +166,18 @@ def confirm_email_verification(user, token):
 
 ###########################################################################################################################
 
+@auth.route('/user')
+@require_token
+def authorized_get_user(user, token):
+    ''' Upon validating user token retrieve user information that is sensitive. '''
+    return {'status': 200, 'msg': 'user found', 'body': user.serialize}
 
+
+#######
+####### Get Public User Information Only (Unauthorized  )
+#######
 @auth.route('/user/<username>', methods=['GET'])
+@require_token
 def get_user(username):
     ''' get a user by username '''
     u = User.query.filter_by(username=username).first()
@@ -176,6 +185,7 @@ def get_user(username):
     return {'status': 200, 'msg': 'user found', 'body': u.serialize}
 
 @auth.route('/user/id/<id>', methods=['GET'])
+@require_token
 def get_user_by_id(id):
     ''' get a user by id '''
     u = User.query.filter_by(id=id).first()
@@ -184,6 +194,7 @@ def get_user_by_id(id):
 
 
 @auth.route('/user/email/<email>', methods=['GET'])
+@require_token
 def get_user_by_email(email):
     ''' get a user by email '''
     u = User.query.filter_by(email=email).first()
@@ -260,5 +271,19 @@ def demote_admin(user, token):
         db.session.commit()
         return {'status': 200, 'msg': 'demotion successful', 'body': {}}
     except: return {'status': 409, 'msg': 'could not demote privileges', 'body': {}}
+
+
+
+#########################################################################################################################
+
+@auth.route('/delete_user')
+def delete_user(user, token):
+    ''' '''
+    try:
+        db.session.delete(user)
+        db.session.commit()
+        return {'status': 200, 'msg': 'user deleted', 'body': {}}
+    except: return {'status': 400, 'msg': 'could not delete user', 'body': {}}
+
 
 
