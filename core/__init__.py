@@ -6,6 +6,8 @@ from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import MetaData
 from twilio.rest import Client as TwilioClient
+from flask_session import Session
+
 
 from config import Configuration
 
@@ -22,6 +24,13 @@ app = Flask(__name__)
 
 # Handle CORS
 CORS(app)
+
+# Configure Flask session to store the session on the server side by
+# Setting the session interface to filesystem
+app.config['SESSION_TYPE'] = 'filesystem'
+
+# Initialize the session with the app
+Session(app)
 
 # Register application configuration settings
 app.config.from_object(Configuration)
